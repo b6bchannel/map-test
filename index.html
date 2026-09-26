@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>TomTom 地点搜索测试</title>
+  <title>Photon 地点搜索测试</title>
 
   <style>
     :root{
@@ -205,9 +205,9 @@
 
 <body>
   <main class="wrap">
-    <h1>TomTom 地点搜索测试</h1>
+    <h1>Photon 地点搜索测试</h1>
     <p class="intro">
-      用大陆手机网络测试 TomTom Search API 的速度和地点准确度。
+      不需要 API Key。用大陆手机网络直接测试 Photon 的响应速度、中文搜索和全球 POI 命中率。
       中文输入 2 个汉字后请求，拉丁字母至少 4 个字符；停止输入 500ms 后发送。
     </p>
 
@@ -223,7 +223,7 @@
       />
 
       <div class="hint">
-        最多返回 5 个候选。点击结果后，会显示可以写入 trip.json 的地点名称、地址和经纬度。
+        最多返回 5 个候选。点击结果后，会显示适合写入 trip.json 的 name / address / lat / lng。
       </div>
 
       <div id="status">等待输入。</div>
@@ -247,13 +247,12 @@
     </section>
 
     <p class="foot">
-      Search powered by TomTom. 本页只用于访问速度与搜索质量测试。
+      Search powered by Photon / OpenStreetMap data. 本页只用于可用性测试，请保持低频调用。
     </p>
   </main>
 
   <script>
-    // 替换成你自己的 TomTom API Key
-    const TOMTOM_KEY = "eEPzFqAM4ELMreKiQF9d0uIMerE32GOr";
+    const PHOTON_ENDPOINT = "https://photon.komoot.io/api/";
 
     const input = document.getElementById("placeInput");
     const statusEl = document.getElementById("status");
@@ -278,16 +277,12 @@
       if (!trimmed) return false;
 
       if (isCJK(trimmed)) {
-        const cjkCount = (trimmed.match(/[\u3400-\u9FFF\uF900-\uFAFF]/g) || []).length;
+        const cjkCount =
+          (trimmed.match(/[\u3400-\u9FFF\uF900-\uFAFF]/g) || []).length;
         return cjkCount >= 2;
       }
 
       return trimmed.replace(/\s+/g, "").length >= 4;
-    }
-
-    function clearResults() {
-      resultsEl.innerHTML = "";
-      selectedWrap.hidden = true;
     }
 
     function escapeHtml(value) {
@@ -299,42 +294,67 @@
         .replaceAll("'", "&#039;");
     }
 
-    function getTitle(item) {
+    function clearResults() {
+      resultsEl.innerHTML = "";
+      selectedWrap.hidden = true;
+    }
+
+    function formatAddress(props) {
+      const line1 = [
+        props.housenumber,
+        props.street
+      ].filter(Boolean).join(" ");
+
+      const locality = [
+        props.district,
+        props.city,
+        props.county,
+        props.state,
+        props.postcode,
+        props.country
+      ].filter(Boolean);
+
+      const pieces = [];
+      if (line1) pieces.push(line1);
+      pieces.push(...locality);
+
+      const unique = [];
+      for (const piece of pieces) {
+        if (!unique.includes(piece)) unique.push(piece);
+      }
+
+      return unique.join(", ");
+    }
+
+    function getTitle(props) {
       return (
-        item.poi?.name ||
-        item.address?.freeformAddress ||
-        item.address?.streetName ||
-        item.type ||
+        props.name ||
+        props.street ||
+        props.city ||
+        props.locality ||
+        props.country ||
         "未命名地点"
       );
     }
 
-    function getAddress(item) {
-      return (
-        item.address?.freeformAddress ||
-        [
-          item.address?.municipality,
-          item.address?.countrySubdivision,
-          item.address?.country
-        ].filter(Boolean).join(", ")
-      );
-    }
-
-    function renderResults(items, elapsedMs) {
+    function renderResults(features, elapsedMs) {
       resultsEl.innerHTML = "";
 
-      if (!items.length) {
+      if (!features.length) {
         setStatus(`未找到结果 · ${elapsedMs} ms`);
         return;
       }
 
-      setStatus(`✅ 返回 ${items.length} 个候选 · ${elapsedMs} ms`);
+      setStatus(`✅ 返回 ${features.length} 个候选 · ${elapsedMs} ms`);
 
-      items.forEach((item) => {
-        const title = getTitle(item);
-        const address = getAddress(item);
-        const lat = item.position?.lat ?? null;
-        const lon = item.position?.lon ?? null;
+      features.forEach((feature) => {
+        const props = feature.properties || {};
+        const coords = feature.geometry?.coordinates || [];
+        const lng = Number.isFinite(Number(coords[0])) ? Number(coords[0]) : null;
+        const lat = Number.isFinite(Number(coords[1])) ? Number(coords[1]) : null;
+
+        const title = getTitle(props);
+        const address = formatAddress(props);
 
         const btn = document.createElement("button");
         btn.className = "result";
@@ -342,11 +362,12 @@
 
         btn.innerHTML = `
           <div class="result-title">${escapeHtml(title)}</div>
-          <div class="result-address">${escapeHtml(address)}</div>
+          <div class="result-address">${escapeHtml(address || "无地址信息")}</div>
           <div class="result-meta">
-            <span>${lat != null ? Number(lat).toFixed(5) : "—"}, ${lon != null ? Number(lon).toFixed(5) : "—"}</span>
-            ${item.type ? `<span>${escapeHtml(item.type)}</span>` : ""}
-            ${item.address?.countryCode ? `<span>${escapeHtml(item.address.countryCode)}</span>` : ""}
+            <span>${lat != null ? lat.toFixed(5) : "—"}, ${lng != null ? lng.toFixed(5) : "—"}</span>
+            ${props.osm_value ? `<span>${escapeHtml(props.osm_value)}</span>` : ""}
+            ${props.type ? `<span>${escapeHtml(props.type)}</span>` : ""}
+            ${props.countrycode ? `<span>${escapeHtml(String(props.countrycode).toUpperCase())}</span>` : ""}
           </div>
         `;
 
@@ -355,8 +376,9 @@
             name: title,
             address: address || title,
             lat,
-            lng: lon,
-            tomtomId: item.id || null
+            lng,
+            osmType: props.osm_type || null,
+            osmId: props.osm_id || null
           };
 
           selectedJson.textContent = JSON.stringify(value, null, 2);
@@ -369,11 +391,6 @@
     }
 
     async function searchPlace(query) {
-      if (!TOMTOM_KEY || TOMTOM_KEY === "YOUR_TOMTOM_API_KEY") {
-        setStatus("⚠️ 请先把 YOUR_TOMTOM_API_KEY 替换成你的 TomTom API Key。");
-        return;
-      }
-
       if (currentController) {
         currentController.abort();
       }
@@ -386,24 +403,21 @@
 
       setStatus("正在搜索…");
 
-      const encodedQuery = encodeURIComponent(query);
-
       const params = new URLSearchParams({
-        key: TOMTOM_KEY,
-        typeahead: "true",
+        q: query,
         limit: "5",
-        language: "zh-CN",
-        view: "Unified"
+        lang: "zh"
       });
 
-      const url =
-        `https://api.tomtom.com/search/2/search/${encodedQuery}.json?${params.toString()}`;
+      const url = `${PHOTON_ENDPOINT}?${params.toString()}`;
 
       try {
         const response = await fetch(url, {
           method: "GET",
           signal: controller.signal,
-          headers: { "Accept": "application/json" }
+          headers: {
+            "Accept": "application/json"
+          }
         });
 
         if (!response.ok) {
@@ -415,8 +429,10 @@
         if (serial !== requestSerial) return;
 
         const elapsedMs = Math.round(performance.now() - started);
-        renderResults(Array.isArray(data.results) ? data.results : [], elapsedMs);
-
+        renderResults(
+          Array.isArray(data.features) ? data.features : [],
+          elapsedMs
+        );
       } catch (error) {
         if (error?.name === "AbortError") return;
 
