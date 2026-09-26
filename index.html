@@ -3,20 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Geoapify 地点搜索测试</title>
+  <title>TomTom 地点搜索测试</title>
 
   <style>
     :root{
       --bg:#f5f6f7;
-      --panel:#ffffff;
+      --panel:#fff;
       --text:#17191c;
       --muted:#6b7280;
       --line:#e5e7eb;
       --soft:#eef0f2;
       --accent:#ef6b63;
-      --accent-soft:#fff1ef;
-      --ok:#16803b;
-      --danger:#b42318;
     }
 
     *{box-sizing:border-box}
@@ -71,10 +68,6 @@
       font-weight:650;
     }
 
-    .search-row{
-      position:relative;
-    }
-
     input{
       width:100%;
       height:50px;
@@ -86,7 +79,6 @@
       font:inherit;
       font-size:16px;
       outline:none;
-      transition:border-color .15s ease, box-shadow .15s ease;
     }
 
     input:focus{
@@ -127,10 +119,6 @@
       text-align:left;
       padding:12px 13px;
       cursor:pointer;
-    }
-
-    .result:active{
-      transform:scale(.995);
     }
 
     .result-title{
@@ -217,40 +205,38 @@
 
 <body>
   <main class="wrap">
-    <h1>Geoapify 地点搜索测试</h1>
+    <h1>TomTom 地点搜索测试</h1>
     <p class="intro">
-      用大陆手机网络直接测试搜索速度和准确度。中文输入 2 个汉字后请求，
-      拉丁字母输入至少 4 个字符后请求；停止输入 500ms 才真正发送。
+      用大陆手机网络测试 TomTom Search API 的速度和地点准确度。
+      中文输入 2 个汉字后请求，拉丁字母至少 4 个字符；停止输入 500ms 后发送。
     </p>
 
     <section class="card">
       <label class="label" for="placeInput">输入地点或地址</label>
 
-      <div class="search-row">
-        <input
-          id="placeInput"
-          type="search"
-          inputmode="search"
-          autocomplete="off"
-          placeholder="例如：上海迪士尼 / Bled Castle"
-        />
-      </div>
+      <input
+        id="placeInput"
+        type="search"
+        inputmode="search"
+        autocomplete="off"
+        placeholder="例如：上海迪士尼 / Bled Castle"
+      />
 
       <div class="hint">
-        最多返回 5 个候选。点击任一结果后，下方会显示适合写入 trip.json 的 name / address / lat / lng。
+        最多返回 5 个候选。点击结果后，会显示可以写入 trip.json 的地点名称、地址和经纬度。
       </div>
 
       <div id="status">等待输入。</div>
       <div id="results" class="results"></div>
 
       <div id="selectedWrap" class="selected" hidden>
-        <h2>选中后可存入 trip.json 的数据</h2>
+        <h2>选中后可写入 trip.json</h2>
         <pre id="selectedJson"></pre>
       </div>
     </section>
 
     <section class="tests">
-      <p class="tests-title">建议依次测试这些：</p>
+      <p class="tests-title">建议依次测试：</p>
       <div class="chips">
         <button class="chip">上海迪士尼</button>
         <button class="chip">东京站</button>
@@ -261,13 +247,13 @@
     </section>
 
     <p class="foot">
-      Location search powered by Geoapify · Data © OpenStreetMap contributors and other data providers.
+      Search powered by TomTom. 本页只用于访问速度与搜索质量测试。
     </p>
   </main>
 
   <script>
-    // 替换成你自己的 Geoapify API Key
-    const GEOAPIFY_KEY = "c68b38c97ab34387b03bbe1399f585bc";
+    // 替换成你自己的 TomTom API Key
+    const TOMTOM_KEY = "eEPzFqAM4ELMreKiQF9d0uIMerE32GOr";
 
     const input = document.getElementById("placeInput");
     const statusEl = document.getElementById("status");
@@ -296,8 +282,7 @@
         return cjkCount >= 2;
       }
 
-      const compact = trimmed.replace(/\s+/g, "");
-      return compact.length >= 4;
+      return trimmed.replace(/\s+/g, "").length >= 4;
     }
 
     function clearResults() {
@@ -305,20 +290,33 @@
       selectedWrap.hidden = true;
     }
 
-    function displayName(result) {
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function getTitle(item) {
       return (
-        result.name ||
-        result.address_line1 ||
-        result.formatted ||
+        item.poi?.name ||
+        item.address?.freeformAddress ||
+        item.address?.streetName ||
+        item.type ||
         "未命名地点"
       );
     }
 
-    function displayAddress(result) {
+    function getAddress(item) {
       return (
-        result.address_line2 ||
-        result.formatted ||
-        ""
+        item.address?.freeformAddress ||
+        [
+          item.address?.municipality,
+          item.address?.countrySubdivision,
+          item.address?.country
+        ].filter(Boolean).join(", ")
       );
     }
 
@@ -333,32 +331,32 @@
       setStatus(`✅ 返回 ${items.length} 个候选 · ${elapsedMs} ms`);
 
       items.forEach((item) => {
+        const title = getTitle(item);
+        const address = getAddress(item);
+        const lat = item.position?.lat ?? null;
+        const lon = item.position?.lon ?? null;
+
         const btn = document.createElement("button");
         btn.className = "result";
         btn.type = "button";
-
-        const title = displayName(item);
-        const address = displayAddress(item);
-        const lat = item.lat;
-        const lon = item.lon;
 
         btn.innerHTML = `
           <div class="result-title">${escapeHtml(title)}</div>
           <div class="result-address">${escapeHtml(address)}</div>
           <div class="result-meta">
             <span>${lat != null ? Number(lat).toFixed(5) : "—"}, ${lon != null ? Number(lon).toFixed(5) : "—"}</span>
-            ${item.country ? `<span>${escapeHtml(item.country)}</span>` : ""}
-            ${item.result_type ? `<span>${escapeHtml(item.result_type)}</span>` : ""}
+            ${item.type ? `<span>${escapeHtml(item.type)}</span>` : ""}
+            ${item.address?.countryCode ? `<span>${escapeHtml(item.address.countryCode)}</span>` : ""}
           </div>
         `;
 
         btn.addEventListener("click", () => {
           const value = {
             name: title,
-            address: item.formatted || address || title,
-            lat: lat,
+            address: address || title,
+            lat,
             lng: lon,
-            placeId: item.place_id || null
+            tomtomId: item.id || null
           };
 
           selectedJson.textContent = JSON.stringify(value, null, 2);
@@ -370,18 +368,9 @@
       });
     }
 
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
     async function searchPlace(query) {
-      if (!GEOAPIFY_KEY || GEOAPIFY_KEY === "YOUR_GEOAPIFY_KEY") {
-        setStatus("⚠️ 请先把 YOUR_GEOAPIFY_KEY 替换成你的 Geoapify API Key。");
+      if (!TOMTOM_KEY || TOMTOM_KEY === "YOUR_TOMTOM_API_KEY") {
+        setStatus("⚠️ 请先把 YOUR_TOMTOM_API_KEY 替换成你的 TomTom API Key。");
         return;
       }
 
@@ -397,23 +386,24 @@
 
       setStatus("正在搜索…");
 
+      const encodedQuery = encodeURIComponent(query);
+
       const params = new URLSearchParams({
-        text: query,
-        format: "json",
+        key: TOMTOM_KEY,
+        typeahead: "true",
         limit: "5",
-        lang: "zh",
-        apiKey: GEOAPIFY_KEY
+        language: "zh-CN",
+        view: "Unified"
       });
 
-      const url = `https://api.geoapify.com/v1/geocode/autocomplete?${params.toString()}`;
+      const url =
+        `https://api.tomtom.com/search/2/search/${encodedQuery}.json?${params.toString()}`;
 
       try {
         const response = await fetch(url, {
           method: "GET",
           signal: controller.signal,
-          headers: {
-            "Accept": "application/json"
-          }
+          headers: { "Accept": "application/json" }
         });
 
         if (!response.ok) {
@@ -428,7 +418,7 @@
         renderResults(Array.isArray(data.results) ? data.results : [], elapsedMs);
 
       } catch (error) {
-        if (error && error.name === "AbortError") return;
+        if (error?.name === "AbortError") return;
 
         const elapsedMs = Math.round(performance.now() - started);
         setStatus(
