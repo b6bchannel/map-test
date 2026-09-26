@@ -1,322 +1,477 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <title>Mapbox 样式与大陆访问测试</title>
-
-  <link href="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.css" rel="stylesheet">
-  <script>
-    window.__testStart = performance.now();
-  </script>
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Geoapify 地点搜索测试</title>
 
   <style>
     :root{
-      --bg:#f6f7f8;
-      --panel:rgba(255,255,255,.97);
+      --bg:#f5f6f7;
+      --panel:#ffffff;
       --text:#17191c;
       --muted:#6b7280;
-      --line:#e7e9ec;
+      --line:#e5e7eb;
       --soft:#eef0f2;
       --accent:#ef6b63;
+      --accent-soft:#fff1ef;
+      --ok:#16803b;
+      --danger:#b42318;
     }
 
     *{box-sizing:border-box}
 
     html,body{
       margin:0;
-      width:100%;
-      height:100%;
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+      min-height:100%;
       background:var(--bg);
       color:var(--text);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",
+        "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
     }
 
     body{
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
+      padding:
+        calc(18px + env(safe-area-inset-top))
+        16px
+        calc(24px + env(safe-area-inset-bottom));
     }
 
-    .topbar{
-      padding:calc(12px + env(safe-area-inset-top)) 14px 10px;
-      background:var(--panel);
-      border-bottom:1px solid var(--line);
-      z-index:10;
-      backdrop-filter:blur(12px);
+    .wrap{
+      width:min(680px,100%);
+      margin:0 auto;
     }
 
-    .topline{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:10px;
-    }
-
-    .title{
+    h1{
       margin:0;
-      font-size:17px;
-      line-height:1.25;
-      font-weight:750;
-      letter-spacing:-.01em;
+      font-size:26px;
+      line-height:1.2;
+      letter-spacing:-.02em;
     }
 
-    .desc{
-      margin:5px 0 0;
+    .intro{
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.6;
+    }
+
+    .card{
+      margin-top:18px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+    }
+
+    .label{
+      display:block;
+      margin-bottom:8px;
+      font-size:13px;
+      font-weight:650;
+    }
+
+    .search-row{
+      position:relative;
+    }
+
+    input{
+      width:100%;
+      height:50px;
+      border:1px solid #d7dbe0;
+      border-radius:13px;
+      background:#fff;
+      color:var(--text);
+      padding:0 14px;
+      font:inherit;
+      font-size:16px;
+      outline:none;
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+
+    input:focus{
+      border-color:#9aa1aa;
+      box-shadow:0 0 0 3px rgba(23,25,28,.06);
+    }
+
+    .hint{
+      margin-top:8px;
+      font-size:12px;
+      line-height:1.5;
+      color:var(--muted);
+    }
+
+    #status{
+      margin-top:12px;
+      padding:10px 11px;
+      border-radius:11px;
+      background:var(--soft);
+      color:#4b5563;
+      font-size:12px;
+      line-height:1.5;
+      white-space:pre-line;
+    }
+
+    .results{
+      margin-top:14px;
+      display:grid;
+      gap:8px;
+    }
+
+    .result{
+      appearance:none;
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:13px;
+      background:#fff;
+      text-align:left;
+      padding:12px 13px;
+      cursor:pointer;
+    }
+
+    .result:active{
+      transform:scale(.995);
+    }
+
+    .result-title{
+      font-size:15px;
+      line-height:1.35;
+      font-weight:680;
+    }
+
+    .result-address{
+      margin-top:4px;
       color:var(--muted);
       font-size:12px;
       line-height:1.45;
     }
 
-    .styles{
+    .result-meta{
+      margin-top:7px;
       display:flex;
-      gap:7px;
-      margin-top:10px;
-      overflow-x:auto;
-      scrollbar-width:none;
-      padding-bottom:1px;
+      flex-wrap:wrap;
+      gap:6px 10px;
+      color:#7a8089;
+      font-size:11px;
     }
 
-    .styles::-webkit-scrollbar{display:none}
+    .selected{
+      margin-top:18px;
+      border-top:1px solid var(--line);
+      padding-top:16px;
+    }
 
-    .style-btn{
-      flex:0 0 auto;
-      appearance:none;
-      border:1px solid #d9dde2;
-      background:#fff;
-      color:#4b5563;
-      border-radius:999px;
-      padding:7px 11px;
+    .selected h2{
+      margin:0 0 10px;
+      font-size:15px;
+    }
+
+    pre{
+      margin:0;
+      padding:12px;
+      border-radius:12px;
+      background:#17191c;
+      color:#f7f7f7;
       font-size:12px;
-      line-height:1;
+      line-height:1.55;
+      overflow:auto;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .tests{
+      margin-top:18px;
+    }
+
+    .tests-title{
+      margin:0 0 9px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .chip{
+      appearance:none;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:#fff;
+      color:#454b54;
+      padding:7px 10px;
+      font-size:12px;
       cursor:pointer;
     }
 
-    .style-btn.active{
-      border-color:var(--text);
-      background:var(--text);
-      color:#fff;
-    }
-
-    #status{
-      margin-top:9px;
-      padding:8px 10px;
-      border-radius:10px;
-      background:var(--soft);
-      font-size:12px;
-      line-height:1.45;
-      word-break:break-word;
-      white-space:pre-line;
-    }
-
-    #map{
-      flex:1;
-      min-height:0;
-    }
-
-    .marker{
-      width:30px;
-      height:30px;
-      border-radius:50%;
-      display:grid;
-      place-items:center;
-      background:var(--accent);
-      color:#fff;
-      border:2px solid #fff;
-      box-shadow:0 2px 8px rgba(0,0,0,.22);
-      font-size:13px;
-      font-weight:750;
-    }
-
-    .mapboxgl-popup-content{
-      border-radius:12px;
-      padding:10px 12px;
-      font-size:13px;
-    }
-
-    .mapboxgl-popup-close-button{
-      padding:4px 7px;
-      font-size:16px;
+    .foot{
+      margin-top:16px;
+      color:#8a9099;
+      font-size:11px;
+      line-height:1.55;
     }
   </style>
 </head>
 
 <body>
-  <div class="topbar">
-    <div class="topline">
-      <div>
-        <h1 class="title">Mapbox 样式测试</h1>
-        <p class="desc">同一套地图，直接切换样式比较观感与加载速度。</p>
+  <main class="wrap">
+    <h1>Geoapify 地点搜索测试</h1>
+    <p class="intro">
+      用大陆手机网络直接测试搜索速度和准确度。中文输入 2 个汉字后请求，
+      拉丁字母输入至少 4 个字符后请求；停止输入 500ms 才真正发送。
+    </p>
+
+    <section class="card">
+      <label class="label" for="placeInput">输入地点或地址</label>
+
+      <div class="search-row">
+        <input
+          id="placeInput"
+          type="search"
+          inputmode="search"
+          autocomplete="off"
+          placeholder="例如：上海迪士尼 / Bled Castle"
+        />
       </div>
-    </div>
 
-    <div class="styles" aria-label="地图样式">
-      <button class="style-btn active" data-style="standard">Standard</button>
-      <button class="style-btn" data-style="light">Light</button>
-      <button class="style-btn" data-style="outdoors">Outdoors</button>
-      <button class="style-btn" data-style="satellite">Satellite</button>
-    </div>
+      <div class="hint">
+        最多返回 5 个候选。点击任一结果后，下方会显示适合写入 trip.json 的 name / address / lat / lng。
+      </div>
 
-    <div id="status">页面已打开，正在检查 Mapbox GL JS…</div>
-  </div>
+      <div id="status">等待输入。</div>
+      <div id="results" class="results"></div>
 
-  <div id="map"></div>
+      <div id="selectedWrap" class="selected" hidden>
+        <h2>选中后可存入 trip.json 的数据</h2>
+        <pre id="selectedJson"></pre>
+      </div>
+    </section>
+
+    <section class="tests">
+      <p class="tests-title">建议依次测试这些：</p>
+      <div class="chips">
+        <button class="chip">上海迪士尼</button>
+        <button class="chip">东京站</button>
+        <button class="chip">Bled Castle</button>
+        <button class="chip">卢浮宫</button>
+        <button class="chip">克拉科夫中央广场</button>
+      </div>
+    </section>
+
+    <p class="foot">
+      Location search powered by Geoapify · Data © OpenStreetMap contributors and other data providers.
+    </p>
+  </main>
 
   <script>
-    // 把下面这一行替换成你自己的 Mapbox Public Access Token（通常以 pk. 开头）
-    const MAPBOX_TOKEN = "pk.eyJ1IjoiaGFpZGVlbHVvIiwiYSI6ImNtdWllbzUweTA3YzAzMW9ndjdmcGJ4bzUifQ.ZVjMkFTYQf4HcuiCK-lSyg";
+    // 替换成你自己的 Geoapify API Key
+    const GEOAPIFY_KEY = "c68b38c97ab34387b03bbe1399f585bc";
 
-    const STYLE_URLS = {
-      standard: "mapbox://styles/mapbox/standard",
-      light: "mapbox://styles/mapbox/light-v11",
-      outdoors: "mapbox://styles/mapbox/outdoors-v12",
-      satellite: "mapbox://styles/mapbox/standard-satellite"
-    };
-
-    const STYLE_LABELS = {
-      standard: "Standard",
-      light: "Light",
-      outdoors: "Outdoors",
-      satellite: "Satellite"
-    };
-
+    const input = document.getElementById("placeInput");
     const statusEl = document.getElementById("status");
-    const startedAt = window.__testStart || performance.now();
-    const styleButtons = [...document.querySelectorAll(".style-btn")];
+    const resultsEl = document.getElementById("results");
+    const selectedWrap = document.getElementById("selectedWrap");
+    const selectedJson = document.getElementById("selectedJson");
 
-    function elapsedSince(start) {
-      return ((performance.now() - start) / 1000).toFixed(1);
-    }
-
-    function totalElapsed() {
-      return elapsedSince(startedAt);
-    }
+    let debounceTimer = null;
+    let currentController = null;
+    let requestSerial = 0;
 
     function setStatus(text) {
       statusEl.textContent = text;
     }
 
-    function setActiveStyleButton(styleKey) {
-      styleButtons.forEach(btn => {
-        btn.classList.toggle("active", btn.dataset.style === styleKey);
-      });
+    function isCJK(text) {
+      return /[\u3400-\u9FFF\uF900-\uFAFF]/.test(text);
     }
 
-    if (typeof mapboxgl === "undefined") {
-      setStatus(
-        "❌ Mapbox GL JS 没有加载成功。\n" +
-        "总耗时：" + totalElapsed() + " 秒"
+    function isLongEnough(text) {
+      const trimmed = text.trim();
+      if (!trimmed) return false;
+
+      if (isCJK(trimmed)) {
+        const cjkCount = (trimmed.match(/[\u3400-\u9FFF\uF900-\uFAFF]/g) || []).length;
+        return cjkCount >= 2;
+      }
+
+      const compact = trimmed.replace(/\s+/g, "");
+      return compact.length >= 4;
+    }
+
+    function clearResults() {
+      resultsEl.innerHTML = "";
+      selectedWrap.hidden = true;
+    }
+
+    function displayName(result) {
+      return (
+        result.name ||
+        result.address_line1 ||
+        result.formatted ||
+        "未命名地点"
       );
-    } else if (!MAPBOX_TOKEN || MAPBOX_TOKEN === "YOUR_MAPBOX_PUBLIC_TOKEN") {
-      setStatus(
-        "⚠️ Mapbox GL JS 已加载。\n" +
-        "请先把 HTML 里的 YOUR_MAPBOX_PUBLIC_TOKEN 替换成你的 Mapbox Public Access Token。"
+    }
+
+    function displayAddress(result) {
+      return (
+        result.address_line2 ||
+        result.formatted ||
+        ""
       );
-    } else {
-      const jsReadySeconds = totalElapsed();
-      mapboxgl.accessToken = MAPBOX_TOKEN;
+    }
 
-      setStatus(
-        "Mapbox GL JS 已加载（" + jsReadySeconds + " 秒）。\n" +
-        "正在加载 Standard 地图…"
-      );
+    function renderResults(items, elapsedMs) {
+      resultsEl.innerHTML = "";
 
-      const map = new mapboxgl.Map({
-        container: "map",
-        style: STYLE_URLS.standard,
-        center: [12.4964, 41.9028],
-        zoom: 2.1
-      });
+      if (!items.length) {
+        setStatus(`未找到结果 · ${elapsedMs} ms`);
+        return;
+      }
 
-      map.addControl(new mapboxgl.NavigationControl(), "top-right");
+      setStatus(`✅ 返回 ${items.length} 个候选 · ${elapsedMs} ms`);
 
-      const points = [
-        { n: 1, name: "上海", lng: 121.4737, lat: 31.2304 },
-        { n: 2, name: "东京", lng: 139.6917, lat: 35.6895 },
-        { n: 3, name: "卢布尔雅那", lng: 14.5058, lat: 46.0569 },
-        { n: 4, name: "巴黎", lng: 2.3522, lat: 48.8566 }
-      ];
+      items.forEach((item) => {
+        const btn = document.createElement("button");
+        btn.className = "result";
+        btn.type = "button";
 
-      points.forEach((p) => {
-        const el = document.createElement("div");
-        el.className = "marker";
-        el.textContent = p.n;
+        const title = displayName(item);
+        const address = displayAddress(item);
+        const lat = item.lat;
+        const lon = item.lon;
 
-        new mapboxgl.Marker({ element: el })
-          .setLngLat([p.lng, p.lat])
-          .setPopup(
-            new mapboxgl.Popup({ offset: 18 }).setHTML(
-              `<strong>${p.n}. ${p.name}</strong><br>${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`
-            )
-          )
-          .addTo(map);
-      });
+        btn.innerHTML = `
+          <div class="result-title">${escapeHtml(title)}</div>
+          <div class="result-address">${escapeHtml(address)}</div>
+          <div class="result-meta">
+            <span>${lat != null ? Number(lat).toFixed(5) : "—"}, ${lon != null ? Number(lon).toFixed(5) : "—"}</span>
+            ${item.country ? `<span>${escapeHtml(item.country)}</span>` : ""}
+            ${item.result_type ? `<span>${escapeHtml(item.result_type)}</span>` : ""}
+          </div>
+        `;
 
-      let initialLoadFinished = false;
+        btn.addEventListener("click", () => {
+          const value = {
+            name: title,
+            address: item.formatted || address || title,
+            lat: lat,
+            lng: lon,
+            placeId: item.place_id || null
+          };
 
-      map.once("load", () => {
-        initialLoadFinished = true;
-        setStatus(
-          "✅ Standard 已加载完成。\n" +
-          "Mapbox GL JS 可用：" + jsReadySeconds + " 秒\n" +
-          "首次地图完成 load：" + totalElapsed() + " 秒\n" +
-          "现在可以点上方按钮切换样式。"
-        );
-      });
-
-      map.on("error", (e) => {
-        const message = e?.error?.message || "未知地图加载错误";
-        setStatus(
-          "❌ Mapbox 请求发生错误。\n" +
-          "当前总耗时：" + totalElapsed() + " 秒\n" +
-          "错误：" + message
-        );
-      });
-
-      styleButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-          const styleKey = button.dataset.style;
-          if (!STYLE_URLS[styleKey]) return;
-
-          const switchStartedAt = performance.now();
-          setActiveStyleButton(styleKey);
-
-          setStatus(
-            "正在切换到 " + STYLE_LABELS[styleKey] + "…"
-          );
-
-          map.setStyle(STYLE_URLS[styleKey]);
-
-          map.once("style.load", () => {
-            setStatus(
-              "✅ " + STYLE_LABELS[styleKey] + " 已加载。\n" +
-              "本次样式切换耗时：" + elapsedSince(switchStartedAt) + " 秒\n" +
-              "可继续拖动 / 缩放观察瓦片加载速度。"
-            );
-          });
+          selectedJson.textContent = JSON.stringify(value, null, 2);
+          selectedWrap.hidden = false;
+          selectedWrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
         });
+
+        resultsEl.appendChild(btn);
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    async function searchPlace(query) {
+      if (!GEOAPIFY_KEY || GEOAPIFY_KEY === "YOUR_GEOAPIFY_KEY") {
+        setStatus("⚠️ 请先把 YOUR_GEOAPIFY_KEY 替换成你的 Geoapify API Key。");
+        return;
+      }
+
+      if (currentController) {
+        currentController.abort();
+      }
+
+      const controller = new AbortController();
+      currentController = controller;
+
+      const serial = ++requestSerial;
+      const started = performance.now();
+
+      setStatus("正在搜索…");
+
+      const params = new URLSearchParams({
+        text: query,
+        format: "json",
+        limit: "5",
+        lang: "zh",
+        apiKey: GEOAPIFY_KEY
       });
 
-      setTimeout(() => {
-        if (!initialLoadFinished) {
-          setStatus(
-            "⚠️ 首次加载超过 10 秒。\n" +
-            "Mapbox GL JS 可用：" + jsReadySeconds + " 秒\n" +
-            "当前总耗时：" + totalElapsed() + " 秒"
-          );
-        }
-      }, 10000);
+      const url = `https://api.geoapify.com/v1/geocode/autocomplete?${params.toString()}`;
 
-      setTimeout(() => {
-        if (!initialLoadFinished) {
-          setStatus(
-            "❌ 首次加载超过 30 秒。\n" +
-            "当前总耗时：" + totalElapsed() + " 秒"
-          );
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          signal: controller.signal,
+          headers: {
+            "Accept": "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
-      }, 30000);
+
+        const data = await response.json();
+
+        if (serial !== requestSerial) return;
+
+        const elapsedMs = Math.round(performance.now() - started);
+        renderResults(Array.isArray(data.results) ? data.results : [], elapsedMs);
+
+      } catch (error) {
+        if (error && error.name === "AbortError") return;
+
+        const elapsedMs = Math.round(performance.now() - started);
+        setStatus(
+          `❌ 搜索失败 · ${elapsedMs} ms\n` +
+          `${error?.message || "未知错误"}`
+        );
+      }
     }
+
+    input.addEventListener("input", () => {
+      const query = input.value.trim();
+
+      clearTimeout(debounceTimer);
+      clearResults();
+
+      if (!query) {
+        setStatus("等待输入。");
+        return;
+      }
+
+      if (!isLongEnough(query)) {
+        setStatus(
+          isCJK(query)
+            ? "继续输入：中文至少 2 个汉字后才请求。"
+            : "继续输入：拉丁字母至少 4 个字符后才请求。"
+        );
+        return;
+      }
+
+      setStatus("已达到搜索长度，等待输入停止 500ms…");
+
+      debounceTimer = setTimeout(() => {
+        searchPlace(query);
+      }, 500);
+    });
+
+    document.querySelectorAll(".chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        input.value = chip.textContent.trim();
+        input.dispatchEvent(new Event("input"));
+        input.focus();
+      });
+    });
   </script>
 </body>
 </html>
