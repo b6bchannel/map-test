@@ -3,481 +3,158 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Photon 地点搜索测试</title>
-
+  <title>Photon 地点搜索诊断测试</title>
   <style>
     :root{
-      --bg:#f5f6f7;
-      --panel:#fff;
-      --text:#17191c;
-      --muted:#6b7280;
-      --line:#e5e7eb;
-      --soft:#eef0f2;
-      --accent:#ef6b63;
+      --bg:#f5f6f7; --panel:#fff; --text:#17191c; --muted:#6b7280;
+      --line:#e5e7eb; --soft:#eef0f2; --accent:#ef6b63;
     }
-
     *{box-sizing:border-box}
-
-    html,body{
-      margin:0;
-      min-height:100%;
-      background:var(--bg);
-      color:var(--text);
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",
-        "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
-    }
-
-    body{
-      padding:
-        calc(18px + env(safe-area-inset-top))
-        16px
-        calc(24px + env(safe-area-inset-bottom));
-    }
-
-    .wrap{
-      width:min(680px,100%);
-      margin:0 auto;
-    }
-
-    h1{
-      margin:0;
-      font-size:26px;
-      line-height:1.2;
-      letter-spacing:-.02em;
-    }
-
-    .intro{
-      margin:8px 0 0;
-      color:var(--muted);
-      font-size:14px;
-      line-height:1.6;
-    }
-
-    .card{
-      margin-top:18px;
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:16px;
-    }
-
-    .label{
-      display:block;
-      margin-bottom:8px;
-      font-size:13px;
-      font-weight:650;
-    }
-
-    input{
-      width:100%;
-      height:50px;
-      border:1px solid #d7dbe0;
-      border-radius:13px;
-      background:#fff;
-      color:var(--text);
-      padding:0 14px;
-      font:inherit;
-      font-size:16px;
-      outline:none;
-    }
-
-    input:focus{
-      border-color:#9aa1aa;
-      box-shadow:0 0 0 3px rgba(23,25,28,.06);
-    }
-
-    .hint{
-      margin-top:8px;
-      font-size:12px;
-      line-height:1.5;
-      color:var(--muted);
-    }
-
-    #status{
-      margin-top:12px;
-      padding:10px 11px;
-      border-radius:11px;
-      background:var(--soft);
-      color:#4b5563;
-      font-size:12px;
-      line-height:1.5;
-      white-space:pre-line;
-    }
-
-    .results{
-      margin-top:14px;
-      display:grid;
-      gap:8px;
-    }
-
-    .result{
-      appearance:none;
-      width:100%;
-      border:1px solid var(--line);
-      border-radius:13px;
-      background:#fff;
-      text-align:left;
-      padding:12px 13px;
-      cursor:pointer;
-    }
-
-    .result-title{
-      font-size:15px;
-      line-height:1.35;
-      font-weight:680;
-    }
-
-    .result-address{
-      margin-top:4px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.45;
-    }
-
-    .result-meta{
-      margin-top:7px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px 10px;
-      color:#7a8089;
-      font-size:11px;
-    }
-
-    .selected{
-      margin-top:18px;
-      border-top:1px solid var(--line);
-      padding-top:16px;
-    }
-
-    .selected h2{
-      margin:0 0 10px;
-      font-size:15px;
-    }
-
-    pre{
-      margin:0;
-      padding:12px;
-      border-radius:12px;
-      background:#17191c;
-      color:#f7f7f7;
-      font-size:12px;
-      line-height:1.55;
-      overflow:auto;
-      white-space:pre-wrap;
-      word-break:break-word;
-    }
-
-    .tests{
-      margin-top:18px;
-    }
-
-    .tests-title{
-      margin:0 0 9px;
-      color:var(--muted);
-      font-size:12px;
-    }
-
-    .chips{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-    }
-
-    .chip{
-      appearance:none;
-      border:1px solid var(--line);
-      border-radius:999px;
-      background:#fff;
-      color:#454b54;
-      padding:7px 10px;
-      font-size:12px;
-      cursor:pointer;
-    }
-
-    .foot{
-      margin-top:16px;
-      color:#8a9099;
-      font-size:11px;
-      line-height:1.55;
-    }
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+    body{padding:calc(18px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))}
+    .wrap{width:min(680px,100%);margin:0 auto}
+    h1{margin:0;font-size:26px;line-height:1.2;letter-spacing:-.02em}
+    .intro{margin:8px 0 0;color:var(--muted);font-size:14px;line-height:1.6}
+    .card{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px}
+    .label{display:block;margin-bottom:8px;font-size:13px;font-weight:650}
+    input{width:100%;height:50px;border:1px solid #d7dbe0;border-radius:13px;background:#fff;color:var(--text);
+      padding:0 14px;font:inherit;font-size:16px;outline:none}
+    #status{margin-top:12px;padding:10px 11px;border-radius:11px;background:var(--soft);color:#4b5563;
+      font-size:12px;line-height:1.5;white-space:pre-line;word-break:break-word}
+    .results{margin-top:14px;display:grid;gap:8px}
+    .result{width:100%;border:1px solid var(--line);border-radius:13px;background:#fff;text-align:left;padding:12px 13px}
+    .result-title{font-size:15px;font-weight:680}
+    .result-address{margin-top:4px;color:var(--muted);font-size:12px;line-height:1.45}
+    .result-meta{margin-top:7px;display:flex;flex-wrap:wrap;gap:6px 10px;color:#7a8089;font-size:11px}
+    .tests{margin-top:18px}
+    .tests-title{margin:0 0 9px;color:var(--muted);font-size:12px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{border:1px solid var(--line);border-radius:999px;background:#fff;color:#454b54;padding:7px 10px;font-size:12px}
+    .foot{margin-top:16px;color:#8a9099;font-size:11px;line-height:1.55}
   </style>
 </head>
-
 <body>
-  <main class="wrap">
-    <h1>Photon 地点搜索测试</h1>
-    <p class="intro">
-      不需要 API Key。用大陆手机网络直接测试 Photon 的响应速度、中文搜索和全球 POI 命中率。
-      中文输入 2 个汉字后请求，拉丁字母至少 4 个字符；停止输入 500ms 后发送。
-    </p>
+<main class="wrap">
+  <h1>Photon 地点搜索诊断</h1>
+  <p class="intro">
+    这版不再强制 zh。固定使用 lang=en 只控制结果展示语言，先确认 Photon 服务和搜索本身是否正常。
+  </p>
 
-    <section class="card">
-      <label class="label" for="placeInput">输入地点或地址</label>
+  <section class="card">
+    <label class="label" for="placeInput">输入地点或地址</label>
+    <input id="placeInput" type="search" autocomplete="off" placeholder="先试 Berlin / Bled Castle" />
+    <div id="status">等待输入。</div>
+    <div id="results" class="results"></div>
+  </section>
 
-      <input
-        id="placeInput"
-        type="search"
-        inputmode="search"
-        autocomplete="off"
-        placeholder="例如：上海迪士尼 / Bled Castle"
-      />
+  <section class="tests">
+    <p class="tests-title">先按这个顺序测：</p>
+    <div class="chips">
+      <button class="chip">Berlin</button>
+      <button class="chip">Bled Castle</button>
+      <button class="chip">Tokyo Station</button>
+      <button class="chip">东京站</button>
+      <button class="chip">卢浮宫</button>
+      <button class="chip">上海迪士尼</button>
+    </div>
+  </section>
 
-      <div class="hint">
-        最多返回 5 个候选。点击结果后，会显示适合写入 trip.json 的 name / address / lat / lng。
-      </div>
+  <p class="foot">
+    Search powered by Photon / OpenStreetMap data. 公开 demo 服务仅适合低频测试。
+  </p>
+</main>
 
-      <div id="status">等待输入。</div>
-      <div id="results" class="results"></div>
+<script>
+const ENDPOINT = "https://photon.komoot.io/api";
+const input = document.getElementById("placeInput");
+const statusEl = document.getElementById("status");
+const resultsEl = document.getElementById("results");
 
-      <div id="selectedWrap" class="selected" hidden>
-        <h2>选中后可写入 trip.json</h2>
-        <pre id="selectedJson"></pre>
-      </div>
-    </section>
+let timer = null;
+let controller = null;
 
-    <section class="tests">
-      <p class="tests-title">建议依次测试：</p>
-      <div class="chips">
-        <button class="chip">上海迪士尼</button>
-        <button class="chip">东京站</button>
-        <button class="chip">Bled Castle</button>
-        <button class="chip">卢浮宫</button>
-        <button class="chip">克拉科夫中央广场</button>
-      </div>
-    </section>
+function setStatus(t){ statusEl.textContent = t; }
+function esc(v){ return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;")
+  .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
 
-    <p class="foot">
-      Search powered by Photon / OpenStreetMap data. 本页只用于可用性测试，请保持低频调用。
-    </p>
-  </main>
+function addr(p){
+  return [p.housenumber, p.street, p.district, p.city, p.county, p.state, p.postcode, p.country]
+    .filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join(", ");
+}
 
-  <script>
-    const PHOTON_ENDPOINT = "https://photon.komoot.io/api/";
+async function search(q){
+  if (controller) controller.abort();
+  controller = new AbortController();
+  resultsEl.innerHTML = "";
+  const started = performance.now();
+  setStatus("正在搜索…");
 
-    const input = document.getElementById("placeInput");
-    const statusEl = document.getElementById("status");
-    const resultsEl = document.getElementById("results");
-    const selectedWrap = document.getElementById("selectedWrap");
-    const selectedJson = document.getElementById("selectedJson");
+  const params = new URLSearchParams({
+    q,
+    limit:"5",
+    lang:"en"
+  });
 
-    let debounceTimer = null;
-    let currentController = null;
-    let requestSerial = 0;
+  const url = `${ENDPOINT}?${params.toString()}`;
 
-    function setStatus(text) {
-      statusEl.textContent = text;
+  try{
+    const r = await fetch(url,{signal:controller.signal,headers:{Accept:"application/json"}});
+    const raw = await r.text();
+    const ms = Math.round(performance.now()-started);
+
+    if(!r.ok){
+      setStatus(`❌ HTTP ${r.status} · ${ms} ms\n${raw.slice(0,500)}`);
+      return;
     }
 
-    function isCJK(text) {
-      return /[\u3400-\u9FFF\uF900-\uFAFF]/.test(text);
+    let data;
+    try{ data = JSON.parse(raw); }
+    catch{
+      setStatus(`❌ 返回内容不是 JSON · ${ms} ms\n${raw.slice(0,500)}`);
+      return;
     }
 
-    function isLongEnough(text) {
-      const trimmed = text.trim();
-      if (!trimmed) return false;
+    const features = Array.isArray(data.features) ? data.features : [];
+    setStatus(`✅ HTTP ${r.status} · ${ms} ms · ${features.length} 个结果\n请求：${url}`);
 
-      if (isCJK(trimmed)) {
-        const cjkCount =
-          (trimmed.match(/[\u3400-\u9FFF\uF900-\uFAFF]/g) || []).length;
-        return cjkCount >= 2;
-      }
+    if(!features.length) return;
 
-      return trimmed.replace(/\s+/g, "").length >= 4;
+    for(const f of features){
+      const p = f.properties || {};
+      const c = f.geometry?.coordinates || [];
+      const div = document.createElement("div");
+      div.className = "result";
+      div.innerHTML = `
+        <div class="result-title">${esc(p.name || p.street || p.city || "未命名地点")}</div>
+        <div class="result-address">${esc(addr(p) || "无地址信息")}</div>
+        <div class="result-meta">
+          <span>${Number(c[1]).toFixed(5)}, ${Number(c[0]).toFixed(5)}</span>
+          ${p.countrycode ? `<span>${esc(String(p.countrycode).toUpperCase())}</span>` : ""}
+          ${p.osm_value ? `<span>${esc(p.osm_value)}</span>` : ""}
+        </div>`;
+      resultsEl.appendChild(div);
     }
+  }catch(e){
+    if(e?.name==="AbortError") return;
+    setStatus(`❌ fetch 失败\n${e?.message || e}`);
+  }
+}
 
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
+input.addEventListener("input",()=>{
+  clearTimeout(timer);
+  const q=input.value.trim();
+  resultsEl.innerHTML="";
+  if(!q){setStatus("等待输入。");return;}
+  timer=setTimeout(()=>search(q),500);
+});
 
-    function clearResults() {
-      resultsEl.innerHTML = "";
-      selectedWrap.hidden = true;
-    }
-
-    function formatAddress(props) {
-      const line1 = [
-        props.housenumber,
-        props.street
-      ].filter(Boolean).join(" ");
-
-      const locality = [
-        props.district,
-        props.city,
-        props.county,
-        props.state,
-        props.postcode,
-        props.country
-      ].filter(Boolean);
-
-      const pieces = [];
-      if (line1) pieces.push(line1);
-      pieces.push(...locality);
-
-      const unique = [];
-      for (const piece of pieces) {
-        if (!unique.includes(piece)) unique.push(piece);
-      }
-
-      return unique.join(", ");
-    }
-
-    function getTitle(props) {
-      return (
-        props.name ||
-        props.street ||
-        props.city ||
-        props.locality ||
-        props.country ||
-        "未命名地点"
-      );
-    }
-
-    function renderResults(features, elapsedMs) {
-      resultsEl.innerHTML = "";
-
-      if (!features.length) {
-        setStatus(`未找到结果 · ${elapsedMs} ms`);
-        return;
-      }
-
-      setStatus(`✅ 返回 ${features.length} 个候选 · ${elapsedMs} ms`);
-
-      features.forEach((feature) => {
-        const props = feature.properties || {};
-        const coords = feature.geometry?.coordinates || [];
-        const lng = Number.isFinite(Number(coords[0])) ? Number(coords[0]) : null;
-        const lat = Number.isFinite(Number(coords[1])) ? Number(coords[1]) : null;
-
-        const title = getTitle(props);
-        const address = formatAddress(props);
-
-        const btn = document.createElement("button");
-        btn.className = "result";
-        btn.type = "button";
-
-        btn.innerHTML = `
-          <div class="result-title">${escapeHtml(title)}</div>
-          <div class="result-address">${escapeHtml(address || "无地址信息")}</div>
-          <div class="result-meta">
-            <span>${lat != null ? lat.toFixed(5) : "—"}, ${lng != null ? lng.toFixed(5) : "—"}</span>
-            ${props.osm_value ? `<span>${escapeHtml(props.osm_value)}</span>` : ""}
-            ${props.type ? `<span>${escapeHtml(props.type)}</span>` : ""}
-            ${props.countrycode ? `<span>${escapeHtml(String(props.countrycode).toUpperCase())}</span>` : ""}
-          </div>
-        `;
-
-        btn.addEventListener("click", () => {
-          const value = {
-            name: title,
-            address: address || title,
-            lat,
-            lng,
-            osmType: props.osm_type || null,
-            osmId: props.osm_id || null
-          };
-
-          selectedJson.textContent = JSON.stringify(value, null, 2);
-          selectedWrap.hidden = false;
-          selectedWrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        });
-
-        resultsEl.appendChild(btn);
-      });
-    }
-
-    async function searchPlace(query) {
-      if (currentController) {
-        currentController.abort();
-      }
-
-      const controller = new AbortController();
-      currentController = controller;
-
-      const serial = ++requestSerial;
-      const started = performance.now();
-
-      setStatus("正在搜索…");
-
-      const params = new URLSearchParams({
-        q: query,
-        limit: "5",
-        lang: "zh"
-      });
-
-      const url = `${PHOTON_ENDPOINT}?${params.toString()}`;
-
-      try {
-        const response = await fetch(url, {
-          method: "GET",
-          signal: controller.signal,
-          headers: {
-            "Accept": "application/json"
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (serial !== requestSerial) return;
-
-        const elapsedMs = Math.round(performance.now() - started);
-        renderResults(
-          Array.isArray(data.features) ? data.features : [],
-          elapsedMs
-        );
-      } catch (error) {
-        if (error?.name === "AbortError") return;
-
-        const elapsedMs = Math.round(performance.now() - started);
-        setStatus(
-          `❌ 搜索失败 · ${elapsedMs} ms\n` +
-          `${error?.message || "未知错误"}`
-        );
-      }
-    }
-
-    input.addEventListener("input", () => {
-      const query = input.value.trim();
-
-      clearTimeout(debounceTimer);
-      clearResults();
-
-      if (!query) {
-        setStatus("等待输入。");
-        return;
-      }
-
-      if (!isLongEnough(query)) {
-        setStatus(
-          isCJK(query)
-            ? "继续输入：中文至少 2 个汉字后才请求。"
-            : "继续输入：拉丁字母至少 4 个字符后才请求。"
-        );
-        return;
-      }
-
-      setStatus("已达到搜索长度，等待输入停止 500ms…");
-
-      debounceTimer = setTimeout(() => {
-        searchPlace(query);
-      }, 500);
-    });
-
-    document.querySelectorAll(".chip").forEach((chip) => {
-      chip.addEventListener("click", () => {
-        input.value = chip.textContent.trim();
-        input.dispatchEvent(new Event("input"));
-        input.focus();
-      });
-    });
-  </script>
+document.querySelectorAll(".chip").forEach(b=>{
+  b.addEventListener("click",()=>{
+    input.value=b.textContent.trim();
+    input.dispatchEvent(new Event("input"));
+  });
+});
+</script>
 </body>
 </html>
