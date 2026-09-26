@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <title>Mapbox 中国大陆访问测试</title>
+  <title>Mapbox 样式与大陆访问测试</title>
 
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.css" rel="stylesheet">
   <script>
@@ -12,61 +12,152 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.js"></script>
 
   <style>
+    :root{
+      --bg:#f6f7f8;
+      --panel:rgba(255,255,255,.97);
+      --text:#17191c;
+      --muted:#6b7280;
+      --line:#e7e9ec;
+      --soft:#eef0f2;
+      --accent:#ef6b63;
+    }
+
+    *{box-sizing:border-box}
+
     html,body{
       margin:0;
       width:100%;
       height:100%;
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-      background:#f6f7f8;
-      color:#17191c;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+      background:var(--bg);
+      color:var(--text);
     }
-    body{display:flex;flex-direction:column}
+
+    body{
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
     .topbar{
-      padding:calc(14px + env(safe-area-inset-top)) 16px 12px;
-      background:rgba(255,255,255,.97);
-      border-bottom:1px solid #e7e9ec;
+      padding:calc(12px + env(safe-area-inset-top)) 14px 10px;
+      background:var(--panel);
+      border-bottom:1px solid var(--line);
       z-index:10;
+      backdrop-filter:blur(12px);
     }
-    .title{margin:0;font-size:18px;font-weight:700}
-    .desc{margin:6px 0 0;color:#6b7280;font-size:13px;line-height:1.5}
-    #status{
+
+    .topline{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .title{
+      margin:0;
+      font-size:17px;
+      line-height:1.25;
+      font-weight:750;
+      letter-spacing:-.01em;
+    }
+
+    .desc{
+      margin:5px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .styles{
+      display:flex;
+      gap:7px;
       margin-top:10px;
-      padding:9px 11px;
+      overflow-x:auto;
+      scrollbar-width:none;
+      padding-bottom:1px;
+    }
+
+    .styles::-webkit-scrollbar{display:none}
+
+    .style-btn{
+      flex:0 0 auto;
+      appearance:none;
+      border:1px solid #d9dde2;
+      background:#fff;
+      color:#4b5563;
+      border-radius:999px;
+      padding:7px 11px;
+      font-size:12px;
+      line-height:1;
+      cursor:pointer;
+    }
+
+    .style-btn.active{
+      border-color:var(--text);
+      background:var(--text);
+      color:#fff;
+    }
+
+    #status{
+      margin-top:9px;
+      padding:8px 10px;
       border-radius:10px;
-      background:#eef0f2;
-      font-size:13px;
-      line-height:1.5;
+      background:var(--soft);
+      font-size:12px;
+      line-height:1.45;
       word-break:break-word;
       white-space:pre-line;
     }
-    #map{flex:1;min-height:0}
+
+    #map{
+      flex:1;
+      min-height:0;
+    }
+
     .marker{
       width:30px;
       height:30px;
       border-radius:50%;
       display:grid;
       place-items:center;
-      background:#ef6b63;
+      background:var(--accent);
       color:#fff;
       border:2px solid #fff;
-      box-shadow:0 2px 8px rgba(0,0,0,.2);
+      box-shadow:0 2px 8px rgba(0,0,0,.22);
       font-size:13px;
-      font-weight:700;
+      font-weight:750;
     }
+
     .mapboxgl-popup-content{
       border-radius:12px;
       padding:10px 12px;
       font-size:13px;
+    }
+
+    .mapboxgl-popup-close-button{
+      padding:4px 7px;
+      font-size:16px;
     }
   </style>
 </head>
 
 <body>
   <div class="topbar">
-    <h1 class="title">Mapbox 中国大陆访问测试</h1>
-    <p class="desc">
-      目标：测试大陆手机网络下，Mapbox 自己的 JS/CSS/CDN 和全球底图实际加载速度。
-    </p>
+    <div class="topline">
+      <div>
+        <h1 class="title">Mapbox 样式测试</h1>
+        <p class="desc">同一套地图，直接切换样式比较观感与加载速度。</p>
+      </div>
+    </div>
+
+    <div class="styles" aria-label="地图样式">
+      <button class="style-btn active" data-style="standard">Standard</button>
+      <button class="style-btn" data-style="light">Light</button>
+      <button class="style-btn" data-style="outdoors">Outdoors</button>
+      <button class="style-btn" data-style="satellite">Satellite</button>
+    </div>
+
     <div id="status">页面已打开，正在检查 Mapbox GL JS…</div>
   </div>
 
@@ -76,110 +167,152 @@
     // 把下面这一行替换成你自己的 Mapbox Public Access Token（通常以 pk. 开头）
     const MAPBOX_TOKEN = "pk.eyJ1IjoiaGFpZGVlbHVvIiwiYSI6ImNtdWllbzUweTA3YzAzMW9ndjdmcGJ4bzUifQ.ZVjMkFTYQf4HcuiCK-lSyg";
 
+    const STYLE_URLS = {
+      standard: "mapbox://styles/mapbox/standard",
+      light: "mapbox://styles/mapbox/light-v11",
+      outdoors: "mapbox://styles/mapbox/outdoors-v12",
+      satellite: "mapbox://styles/mapbox/standard-satellite"
+    };
+
+    const STYLE_LABELS = {
+      standard: "Standard",
+      light: "Light",
+      outdoors: "Outdoors",
+      satellite: "Satellite"
+    };
+
     const statusEl = document.getElementById("status");
     const startedAt = window.__testStart || performance.now();
+    const styleButtons = [...document.querySelectorAll(".style-btn")];
 
-    function elapsed() {
-      return ((performance.now() - startedAt) / 1000).toFixed(1);
+    function elapsedSince(start) {
+      return ((performance.now() - start) / 1000).toFixed(1);
+    }
+
+    function totalElapsed() {
+      return elapsedSince(startedAt);
     }
 
     function setStatus(text) {
       statusEl.textContent = text;
     }
 
+    function setActiveStyleButton(styleKey) {
+      styleButtons.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.style === styleKey);
+      });
+    }
+
     if (typeof mapboxgl === "undefined") {
       setStatus(
         "❌ Mapbox GL JS 没有加载成功。\n" +
-        "耗时：" + elapsed() + " 秒\n" +
-        "如果这里失败，说明 api.mapbox.com 本身在当前网络就有问题。"
+        "总耗时：" + totalElapsed() + " 秒"
       );
     } else if (!MAPBOX_TOKEN || MAPBOX_TOKEN === "YOUR_MAPBOX_PUBLIC_TOKEN") {
       setStatus(
         "⚠️ Mapbox GL JS 已加载。\n" +
-        "JS 加载到可用耗时：" + elapsed() + " 秒\n" +
         "请先把 HTML 里的 YOUR_MAPBOX_PUBLIC_TOKEN 替换成你的 Mapbox Public Access Token。"
       );
     } else {
-      const jsReadySeconds = elapsed();
+      const jsReadySeconds = totalElapsed();
+      mapboxgl.accessToken = MAPBOX_TOKEN;
 
       setStatus(
         "Mapbox GL JS 已加载（" + jsReadySeconds + " 秒）。\n" +
-        "正在请求全球地图数据…"
+        "正在加载 Standard 地图…"
       );
-
-      mapboxgl.accessToken = MAPBOX_TOKEN;
 
       const map = new mapboxgl.Map({
         container: "map",
-        style: "mapbox://styles/mapbox/streets-v12",
+        style: STYLE_URLS.standard,
         center: [12.4964, 41.9028],
         zoom: 2.1
       });
 
       map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-      map.on("load", () => {
-        const mapLoadedSeconds = elapsed();
+      const points = [
+        { n: 1, name: "上海", lng: 121.4737, lat: 31.2304 },
+        { n: 2, name: "东京", lng: 139.6917, lat: 35.6895 },
+        { n: 3, name: "卢布尔雅那", lng: 14.5058, lat: 46.0569 },
+        { n: 4, name: "巴黎", lng: 2.3522, lat: 48.8566 }
+      ];
 
-        setStatus(
-          "✅ 地图已成功加载。\n" +
-          "Mapbox GL JS 可用：" + jsReadySeconds + " 秒\n" +
-          "地图完成 load：" + mapLoadedSeconds + " 秒\n" +
-          "请继续拖动、缩放地图，观察瓦片是否会长时间空白。"
-        );
+      points.forEach((p) => {
+        const el = document.createElement("div");
+        el.className = "marker";
+        el.textContent = p.n;
 
-        const points = [
-          { n: 1, name: "上海", lng: 121.4737, lat: 31.2304 },
-          { n: 2, name: "东京", lng: 139.6917, lat: 35.6895 },
-          { n: 3, name: "卢布尔雅那", lng: 14.5058, lat: 46.0569 },
-          { n: 4, name: "巴黎", lng: 2.3522, lat: 48.8566 }
-        ];
-
-        points.forEach((p) => {
-          const el = document.createElement("div");
-          el.className = "marker";
-          el.textContent = p.n;
-
-          new mapboxgl.Marker({ element: el })
-            .setLngLat([p.lng, p.lat])
-            .setPopup(
-              new mapboxgl.Popup({ offset: 18 }).setHTML(
-                `<strong>${p.n}. ${p.name}</strong><br>${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`
-              )
+        new mapboxgl.Marker({ element: el })
+          .setLngLat([p.lng, p.lat])
+          .setPopup(
+            new mapboxgl.Popup({ offset: 18 }).setHTML(
+              `<strong>${p.n}. ${p.name}</strong><br>${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`
             )
-            .addTo(map);
-        });
+          )
+          .addTo(map);
+      });
+
+      let initialLoadFinished = false;
+
+      map.once("load", () => {
+        initialLoadFinished = true;
+        setStatus(
+          "✅ Standard 已加载完成。\n" +
+          "Mapbox GL JS 可用：" + jsReadySeconds + " 秒\n" +
+          "首次地图完成 load：" + totalElapsed() + " 秒\n" +
+          "现在可以点上方按钮切换样式。"
+        );
       });
 
       map.on("error", (e) => {
-        const message = e && e.error && e.error.message
-          ? e.error.message
-          : "未知地图加载错误";
-
+        const message = e?.error?.message || "未知地图加载错误";
         setStatus(
-          "❌ Mapbox 地图请求发生错误。\n" +
-          "当前耗时：" + elapsed() + " 秒\n" +
+          "❌ Mapbox 请求发生错误。\n" +
+          "当前总耗时：" + totalElapsed() + " 秒\n" +
           "错误：" + message
         );
       });
 
-      setTimeout(() => {
-        if (!map.loaded()) {
+      styleButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const styleKey = button.dataset.style;
+          if (!STYLE_URLS[styleKey]) return;
+
+          const switchStartedAt = performance.now();
+          setActiveStyleButton(styleKey);
+
           setStatus(
-            "⚠️ 10 秒后地图仍未完全加载。\n" +
+            "正在切换到 " + STYLE_LABELS[styleKey] + "…"
+          );
+
+          map.setStyle(STYLE_URLS[styleKey]);
+
+          map.once("style.load", () => {
+            setStatus(
+              "✅ " + STYLE_LABELS[styleKey] + " 已加载。\n" +
+              "本次样式切换耗时：" + elapsedSince(switchStartedAt) + " 秒\n" +
+              "可继续拖动 / 缩放观察瓦片加载速度。"
+            );
+          });
+        });
+      });
+
+      setTimeout(() => {
+        if (!initialLoadFinished) {
+          setStatus(
+            "⚠️ 首次加载超过 10 秒。\n" +
             "Mapbox GL JS 可用：" + jsReadySeconds + " 秒\n" +
-            "当前总耗时：" + elapsed() + " 秒\n" +
-            "如果最终能出图但持续很慢，也不适合作为正式方案。"
+            "当前总耗时：" + totalElapsed() + " 秒"
           );
         }
       }, 10000);
 
       setTimeout(() => {
-        if (!map.loaded()) {
+        if (!initialLoadFinished) {
           setStatus(
-            "❌ 30 秒后地图仍未完全加载。\n" +
-            "当前总耗时：" + elapsed() + " 秒\n" +
-            "这基本可以判定当前大陆网络下体验不合格。"
+            "❌ 首次加载超过 30 秒。\n" +
+            "当前总耗时：" + totalElapsed() + " 秒"
           );
         }
       }, 30000);
